@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Mulish:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ifr-primary: #800000;
+  --ifr-primary-light: #a00000;
+  --ifr-primary-dark: #600000;
+}
+
+body {
+  font-family: 'Mulish', sans-serif;
+  line-height: 1.8;
+  color: #333;
+  background: #f8f7f7;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Poppins', sans-serif;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
