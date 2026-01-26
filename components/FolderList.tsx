@@ -45,7 +45,13 @@ export default function FolderList({
     return items.filter(item => item.folder_id === folderId)
   }
 
-  const getTypeIcon = (type: string) => {
+  const getTypeIcon = (type: string, source?: string) => {
+    // Tool outputs krijgen speciaal icoon
+    const toolSources = ['financieel-kompas', 'energiekompas', 'vastgoed-dashboard', 'locatie-analyse', 'gite-calculator', 'overheden-zoeker', 'beroepenchecker'];
+    if (source && toolSources.includes(source)) {
+      return '⚙️'
+    }
+    
     switch (type) {
       case 'article': return '📄'
       case 'external': return '🔗'
@@ -121,7 +127,7 @@ export default function FolderList({
                   </div>
                 ) : (
                   <>
-                    {folderItems.map((item) => {
+                    {folderItems.map((item) => {f
                       const isItemExpanded = expandedItems.has(item.id)
                       const hasSummary = item.note_content && item.note_content.length > 0
                       
@@ -132,7 +138,7 @@ export default function FolderList({
                         >
                           <div className="px-6 py-3 pl-14 flex items-center justify-between">
                             <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <span className="text-lg">{getTypeIcon(item.type)}</span>
+                              <span className="text-lg">{getTypeIcon(item.type, item.source)}</span>
                               <div className="flex-1 min-w-0">
                                 {item.url ? (
                                   <a 
