@@ -45,10 +45,10 @@ export default function FolderList({
     return items.filter(item => item.folder_id === folderId)
   }
 
-  const toolSources = ['financieel-kompas', 'energiekompas', 'vastgoed-dashboard', 'locatie-analyse', 'gite-calculator', 'overheden-zoeker', 'beroepenchecker']
+  const nonToolSources = ['infofrankrijk', 'forum', 'nedergids', 'extern', 'notitie']
 
   const getTypeIcon = (type: string, source?: string) => {
-    if (source && toolSources.includes(source)) {
+    if (source && !nonToolSources.includes(source)) {
       return '⚙️'
     }
     
@@ -62,7 +62,7 @@ export default function FolderList({
   }
 
   const getSummaryLabel = (source?: string) => {
-    if (source && toolSources.includes(source)) {
+    if (source && !nonToolSources.includes(source)) {
       return { icon: '⚙️', label: 'Tool Output' }
     }
     return { icon: '🤖', label: 'AI Samenvatting' }
