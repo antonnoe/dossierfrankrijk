@@ -45,9 +45,9 @@ export default function FolderList({
     return items.filter(item => item.folder_id === folderId)
   }
 
+  const toolSources = ['financieel-kompas', 'energiekompas', 'vastgoed-dashboard', 'locatie-analyse', 'gite-calculator', 'overheden-zoeker', 'beroepenchecker']
+
   const getTypeIcon = (type: string, source?: string) => {
-    // Tool outputs krijgen speciaal icoon
-    const toolSources = ['financieel-kompas', 'energiekompas', 'vastgoed-dashboard', 'locatie-analyse', 'gite-calculator', 'overheden-zoeker', 'beroepenchecker'];
     if (source && toolSources.includes(source)) {
       return '⚙️'
     }
@@ -59,6 +59,13 @@ export default function FolderList({
       case 'checklist': return '☑️'
       default: return '📎'
     }
+  }
+
+  const getSummaryLabel = (source?: string) => {
+    if (source && toolSources.includes(source)) {
+      return { icon: '⚙️', label: 'Tool Output' }
+    }
+    return { icon: '🤖', label: 'AI Samenvatting' }
   }
 
   const getSourceBadge = (source?: string) => {
@@ -127,9 +134,10 @@ export default function FolderList({
                   </div>
                 ) : (
                   <>
-                    {folderItems.map((item) => {f
+                    {folderItems.map((item) => {
                       const isItemExpanded = expandedItems.has(item.id)
                       const hasSummary = item.note_content && item.note_content.length > 0
+                      const summaryInfo = getSummaryLabel(item.source)
                       
                       return (
                         <div
@@ -163,12 +171,11 @@ export default function FolderList({
                                   </span>
                                 )}
                                 
-                                {/* Preview van samenvatting + klik voor meer */}
                                 {hasSummary && !isItemExpanded && (
                                   <p 
                                     onClick={() => toggleItem(item.id)}
                                     className="text-sm text-gray-500 mt-1 truncate cursor-pointer hover:text-ifr-800"
-                                    title="Klik om volledige samenvatting te zien"
+                                    title="Klik om volledige inhoud te zien"
                                   >
                                     {item.note_content}
                                   </p>
@@ -211,13 +218,12 @@ export default function FolderList({
                             </div>
                           </div>
                           
-                          {/* Uitgeklapte samenvatting */}
                           {hasSummary && isItemExpanded && (
                             <div className="px-6 py-4 pl-14 bg-amber-50 border-t border-amber-100">
                               <div className="flex items-start gap-2">
-                                <span className="text-lg">🤖</span>
+                                <span className="text-lg">{summaryInfo.icon}</span>
                                 <div className="flex-1">
-                                  <p className="text-sm font-medium text-amber-800 mb-2">AI Samenvatting</p>
+                                  <p className="text-sm font-medium text-amber-800 mb-2">{summaryInfo.label}</p>
                                   <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                                     {item.note_content}
                                   </p>
