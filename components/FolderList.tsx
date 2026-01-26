@@ -19,6 +19,7 @@ export default function FolderList({
   onDeleteItem 
 }: FolderListProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set([folders[0]?.id]))
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set())
 
   const toggleFolder = (folderId: string) => {
     const newExpanded = new Set(expandedFolders)
@@ -28,6 +29,16 @@ export default function FolderList({
       newExpanded.add(folderId)
     }
     setExpandedFolders(newExpanded)
+  }
+
+  const toggleItem = (itemId: string) => {
+    const newExpanded = new Set(expandedItems)
+    if (newExpanded.has(itemId)) {
+      newExpanded.delete(itemId)
+    } else {
+      newExpanded.add(itemId)
+    }
+    setExpandedItems(newExpanded)
   }
 
   const getItemsForFolder = (folderId: string) => {
@@ -110,70 +121,107 @@ export default function FolderList({
                   </div>
                 ) : (
                   <>
-                    {folderItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="px-6 py-3 pl-14 border-t border-gray-100 flex items-center justify-between bg-white hover:bg-gray-50 transition-all group"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <span className="text-lg">{getTypeIcon(item.type)}</span>
-                          <div className="flex-1 min-w-0">
-                            {item.url ? (
-                              <a 
-                                href={item.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={`hover:text-ifr-800 hover:underline ${
-                                  item.type === 'checklist' && item.is_done 
-                                    ? 'text-gray-400 line-through' 
-                                    : 'text-gray-800'
-                                }`}
+                    {folderItems.map((item) => {
+                      const isItemExpanded = expandedItems.has(item.id)
+                      const hasSummary = item.note_content && item.note_content.length > 0
+                      
+                      return (
+                        <div
+                          key={item.id}
+                          className="border-t border-gray-100 bg-white hover:bg-gray-50 transition-all group"
+                        >
+                          <div className="px-6 py-3 pl-14 flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <span className="text-lg">{getTypeIcon(item.type)}</span>
+                              <div className="flex-1 min-w-0">
+                                {item.url ? (
+                                  <a 
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={`hover:text-ifr-800 hover:underline ${
+                                      item.type === 'checklist' && item.is_done 
+                                        ? 'text-gray-400 line-through' 
+                                        : 'text-gray-800'
+                                    }`}
+                                  >
+                                    {item.title}
+                                  </a>
+                                ) : (
+                                  <span className={
+                                    item.type === 'checklist' && item.is_done 
+                                      ? 'text-gray-400 line-through' 
+                                      : 'text-gray-800'
+                                  }>
+                                    {item.title}
+                                  </span>
+                                )}
+                                
+                                {/* Preview van samenvatting + klik voor meer */}
+                                {hasSummary && !isItemExpanded && (
+                                  <p 
+                                    onClick={() => toggleItem(item.id)}
+                                    className="text-sm text-gray-500 mt-1 truncate cursor-pointer hover:text-ifr-800"
+                                    title="Klik om volledige samenvatting te zien"
+                                  >
+                                    {item.note_content}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                              {hasSummary && (
+                                <button
+                                  onClick={() => toggleItem(item.id)}
+                                  className="text-xs text-ifr-800 hover:underline font-medium"
+                                >
+                                  {isItemExpanded ? '▲ Minder' : '▼ Samenvatting'}
+                                </button>
+                              )}
+                              
+                              {getSourceBadge(item.source)}
+                              
+                              {item.type === 'checklist' && (
+                                <button
+                                  onClick={() => onToggleChecklist(item.id, !item.is_done)}
+                                  className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                                    item.is_done 
+                                      ? 'bg-green-500 border-green-500 text-white' 
+                                      : 'border-gray-300 hover:border-green-500'
+                                  }`}
+                                >
+                                  {item.is_done && '✓'}
+                                </button>
+                              )}
+                              
+                              <button
+                                onClick={() => onDeleteItem(item.id)}
+                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1"
+                                title="Verwijderen"
                               >
-                                {item.title}
-                              </a>
-                            ) : (
-                              <span className={
-                                item.type === 'checklist' && item.is_done 
-                                  ? 'text-gray-400 line-through' 
-                                  : 'text-gray-800'
-                              }>
-                                {item.title}
-                              </span>
-                            )}
-                            {item.note_content && (
-                              <p className="text-sm text-gray-500 mt-1 truncate">
-                                {item.note_content}
-                              </p>
-                            )}
+                                🗑️
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                          {getSourceBadge(item.source)}
                           
-                          {item.type === 'checklist' && (
-                            <button
-                              onClick={() => onToggleChecklist(item.id, !item.is_done)}
-                              className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
-                                item.is_done 
-                                  ? 'bg-green-500 border-green-500 text-white' 
-                                  : 'border-gray-300 hover:border-green-500'
-                              }`}
-                            >
-                              {item.is_done && '✓'}
-                            </button>
+                          {/* Uitgeklapte samenvatting */}
+                          {hasSummary && isItemExpanded && (
+                            <div className="px-6 py-4 pl-14 bg-amber-50 border-t border-amber-100">
+                              <div className="flex items-start gap-2">
+                                <span className="text-lg">🤖</span>
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-amber-800 mb-2">AI Samenvatting</p>
+                                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                    {item.note_content}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
                           )}
-                          
-                          <button
-                            onClick={() => onDeleteItem(item.id)}
-                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1"
-                            title="Verwijderen"
-                          >
-                            🗑️
-                          </button>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                     
                     <button
                       onClick={() => onAddItem(folder.id)}
