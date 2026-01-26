@@ -52,10 +52,13 @@ export default function DashboardPage() {
   const loadData = async () => {
     setLoading(true)
     
-    const { data: foldersData, error: foldersError } = await supabase
-      .from('folders')
-      .select('*')
-      .order('sort_order')
+  const { data: { user } } = await supabase.auth.getUser()
+
+const { data: foldersData, error: foldersError } = await supabase
+  .from('folders')
+  .select('*')
+  .eq('user_id', user?.id)
+  .order('sort_order')
     
     if (foldersError) {
       console.error('Error loading folders:', foldersError)
