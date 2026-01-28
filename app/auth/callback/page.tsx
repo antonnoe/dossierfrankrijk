@@ -10,28 +10,23 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const supabase = createClient()
-    
-    // Supabase detecteert automatisch de code in de URL
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        setStatus('Fout: ' + error.message)
-        setTimeout(() => router.push('/login'), 3000)
-        return
-      }
+
+    // Luister naar auth state change - dit vangt de sessie op
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event, session)
       
-      if (session) {
-        router.push('/dashboard')
-      } else {
-        setStatus('Sessie wordt aangemaakt...')
-        // Luister naar auth changes
-        supabase.auth.onAuthStateChange((event, session) => {
-          if (session) {
-            router.push('/dashboard')
-          }
-        })
+      if (event === 'SIGNED_IN' && session) {
+        setStatus('Ingelogd! Doorsturen...')
+        // Kleine delay om cookies te laten schrijven
+        setTimeout(() => {
+          window.location.href = '/dashboard'
+        }, 500)
       }
     })
-  }, [router])
+
+    // Cleanup
+    return () => subscription.unsubscribe()
+  }, [])
 
   return (
     <div className="min-h-screen flex items-center justify-center">
