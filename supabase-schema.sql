@@ -32,6 +32,29 @@ create table public.items (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- =============================================================================
+-- METADATA KOLOM TOEVOEGEN (voor tool-data van Café Claude & InfoFrankrijk)
+-- =============================================================================
+
+-- Voeg metadata kolom toe aan items tabel
+ALTER TABLE public.items 
+ADD COLUMN IF NOT EXISTS metadata jsonb DEFAULT '{}'::jsonb;
+
+-- Index voor snelle JSON queries
+CREATE INDEX IF NOT EXISTS items_metadata_idx ON public.items USING gin (metadata);
+
+-- Voorbeelden van queries op metadata:
+-- SELECT * FROM items WHERE metadata->>'tool' = 'energie_calculator';
+-- SELECT * FROM items WHERE (metadata->'data'->>'ua_waarde')::numeric < 0.5;
+
+-- =============================================================================
+-- VERIFICATIE
+-- =============================================================================
+-- Check of de metadata kolom correct is toegevoegd:
+-- SELECT column_name, data_type, column_default 
+-- FROM information_schema.columns 
+-- WHERE table_name = 'items' AND column_name = 'metadata';
+
 -- 3. ROW LEVEL SECURITY (RLS)
 -- Zorgt ervoor dat gebruikers alleen hun eigen data zien
 
