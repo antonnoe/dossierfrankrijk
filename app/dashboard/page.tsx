@@ -97,14 +97,11 @@ export default function DashboardPage() {
           // Sanitize items: ensure metadata is safe to use
           const sanitizedItems = itemsData.map(item => {
             try {
-              // If metadata exists and is valid JSON, keep it
-              // If not, set to empty object
-              if (item.metadata) {
-                // Test if it's valid by accessing it
-                const test = typeof item.metadata === 'object' ? item.metadata : {}
-                return { ...item, metadata: test }
+              // If metadata exists and is valid JSON, keep it; otherwise set to empty object
+              return {
+                ...item,
+                metadata: (item.metadata && typeof item.metadata === 'object') ? item.metadata : {}
               }
-              return { ...item, metadata: {} }
             } catch (metadataErr) {
               console.warn('Invalid metadata for item:', item.id, metadataErr)
               return { ...item, metadata: {} }
