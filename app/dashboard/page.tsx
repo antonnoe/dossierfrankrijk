@@ -25,6 +25,7 @@ export interface Item {
   source?: string
   is_done: boolean
   created_at: string
+  metadata?: Record<string, any> | null  // NEW: Support for metadata column
 }
 
 export default function DashboardPage() {
@@ -52,56 +53,109 @@ export default function DashboardPage() {
   const loadData = async () => {
     setLoading(true)
     
-  const { data: { user } } = await supabase.auth.getUser()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
 
-const { data: foldersData, error: foldersError } = await supabase
-  .from('folders')
-  .select('*')
-  .eq('user_id', user?.id)
-  .order('sort_order')
-    
-    if (foldersError) {
-      console.error('Error loading folders:', foldersError)
-    }
+      // Load folders with error handling
+      try {
+        const { data: foldersData, error: foldersError } = await supabase
+          .from('folders')
+          .select('*')
+          .eq('user_id', user?.id)
+          .order('sort_order')
+        
+        if (foldersError) {
+          console.error('Error loading folders:', foldersError)
+        }
 
-    if (!foldersData || foldersData.length === 0) {
-      const { data: newFolders } = await supabase
-        .from('folders')
-        .insert(defaultFolders)
-        .select()
+        if (!foldersData || foldersData.length === 0) {
+          const { data: newFolders } = await supabase
+            .from('folders')
+            .insert(defaultFolders)
+            .select()
+          
+          setFolders(newFolders || [])
+        } else {
+          setFolders(foldersData)
+        }
+      } catch (folderErr) {
+        console.error('Failed to load folders:', folderErr)
+        setFolders([])
+      }
+
+      // Load items with metadata-safe error handling
+      try {
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('items')
+          .select('*')
+          .order('created_at', { ascending: false })
+        
+        if (itemsError) {
+          console.error('Error loading items:', itemsError)
+          setItems([])
+        } else if (itemsData) {
+          // Sanitize items: ensure metadata is safe to use
+          const sanitizedItems = itemsData.map(item => {
+            try {
+              // If metadata exists and is valid JSON, keep it; otherwise set to empty object
+              return {
+                ...item,
+                metadata: (item.metadata && typeof item.metadata === 'object') ? item.metadata : {}
+              }
+            } catch (metadataErr) {
+              console.warn('Invalid metadata for item:', item.id, metadataErr)
+              return { ...item, metadata: {} }
+            }
+          })
+          
+          setItems(sanitizedItems)
+        } else {
+          setItems([])
+        }
+      } catch (itemErr) {
+        console.error('Failed to load items:', itemErr)
+        setItems([])
+      }
       
-      setFolders(newFolders || [])
-    } else {
-      setFolders(foldersData)
+    } catch (err) {
+      console.error('Critical error in loadData:', err)
+      setFolders([])
+      setItems([])
+    } finally {
+      setLoading(false)
     }
-
-    const { data: itemsData, error: itemsError } = await supabase
-      .from('items')
-      .select('*')
-      .order('created_at', { ascending: false })
-    
-    if (itemsError) {
-      console.error('Error loading items:', itemsError)
-    }
-    
-    setItems(itemsData || [])
-    setLoading(false)
   }
 
   const handleAddItem = async (item: Omit<Item, 'id' | 'created_at'>) => {
-    const { data, error } = await supabase
-      .from('items')
-      .insert(item)
-      .select()
-      .single()
-    
-    if (error) {
-      console.error('Error adding item:', error)
-      return
+    try {
+      // Ensure metadata is valid JSON or undefined
+      const itemToInsert = {
+        ...item,
+        metadata: item.metadata || {}
+      }
+      
+      const { data, error } = await supabase
+        .from('items')
+        .insert(itemToInsert)
+        .select()
+        .single()
+      
+      if (error) {
+        console.error('Error adding item:', error)
+        return
+      }
+      
+      // Sanitize returned data
+      const sanitizedData = {
+        ...data,
+        metadata: data.metadata || {}
+      }
+      
+      setItems([sanitizedData, ...items])
+      setShowAddModal(false)
+    } catch (err) {
+      console.error('Failed to add item:', err)
     }
-    
-    setItems([data, ...items])
-    setShowAddModal(false)
   }
 
   const handleToggleChecklist = async (itemId: string, isDone: boolean) => {
